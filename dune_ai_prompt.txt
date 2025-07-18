@@ -1,0 +1,92 @@
+# Dune AI Prompt for Mento Reserve Dashboard
+
+## Project Overview
+I need to create SQL queries for a dashboard that tracks Mento's reserve holdings across Celo and Ethereum blockchains. The dashboard should show real-time data about reserve assets, their USD values, and distribution across different protocols.
+
+## Key Requirements
+
+### 1. Reserve Addresses
+- **Celo Reserve**: 0x9380fA34Fd9e4Fd14c06305fd7B6199089eD4eb9
+- **Ethereum Reserve**: 0xd0697f70E79476195B742d5aFAb14BE50f98CC1E
+
+### 2. Target Assets
+Track these specific assets:
+- **Native Tokens**: CELO, ETH
+- **Stablecoins**: USDC, USDT, EURC, axlUSDC, axlEUROC, USDGLO
+- **Wrapped Tokens**: WBTC, WETH
+- **Staked Tokens**: stETH, stEUR, sDAI
+
+### 3. Required Queries
+
+#### Query 1: Reserve Overview
+- Total USD value across both chains
+- Asset count and distribution
+- Last updated timestamp
+
+#### Query 2: Asset Breakdown
+- Individual asset balances and USD values
+- Chain distribution (Celo vs Ethereum)
+- Asset symbols and decimals
+
+#### Query 3: Chain Comparison
+- Side-by-side comparison of Celo vs Ethereum holdings
+- Total value per chain
+- Asset distribution per chain
+
+#### Query 4: Protocol Exposure
+- Breakdown by DeFi protocols (if assets are in protocols)
+- Protocol names and USD values
+- Asset allocation within protocols
+
+#### Query 5: Historical Trends
+- Daily/weekly value changes over time
+- Asset composition changes
+- Performance metrics
+
+## Technical Requirements
+
+### Table Structure
+Use these Dune tables:
+- `celo.transactions` - for Celo blockchain data
+- `ethereum.transactions` - for Ethereum blockchain data
+- `prices.usd` - for asset price data
+- `tokens.erc20` - for token metadata
+
+### Data Handling
+- Convert string addresses to bytearray literals (remove quotes)
+- Handle different token decimals correctly
+- Use proper JOIN operations for price data
+- Include error handling for missing data
+
+### Output Format
+Each query should return:
+- Clean, readable column names
+- Proper data types (numeric for amounts, string for addresses)
+- Consistent date formatting
+- USD values where applicable
+
+## Example Query Structure
+```sql
+-- Example structure for asset breakdown
+SELECT 
+    'CELO' as chain,
+    t.symbol as asset,
+    SUM(CAST(t.value AS DOUBLE) / POWER(10, t.decimals)) as total_balance,
+    SUM(CAST(t.value AS DOUBLE) / POWER(10, t.decimals) * p.price) as total_usd_value
+FROM celo.transactions t
+LEFT JOIN prices.usd p ON t.symbol = p.symbol 
+    AND DATE_TRUNC('hour', t.block_time) = DATE_TRUNC('hour', p.minute)
+WHERE t."to" = 0x9380fA34Fd9e4Fd14c06305fd7B6199089eD4eb9
+    AND t.block_time >= NOW() - INTERVAL '7 days'
+GROUP BY t.symbol, t.decimals
+```
+
+## Important Notes
+1. Use bytearray literals for addresses (no quotes)
+2. Handle token transfers and balance changes properly
+3. Include proper time filtering for performance
+4. Use appropriate aggregation functions
+5. Ensure price data is current and accurate
+6. Handle edge cases like missing price data
+
+Please generate optimized SQL queries that follow these requirements and work with Dune's current table structure. 
